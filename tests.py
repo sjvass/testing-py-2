@@ -29,7 +29,7 @@ class PartyTests(unittest.TestCase):
         self.assertNotIn(b"<form", result.data)
 
 
-class PartyTestsDatabase(unittest.TestCase):
+class PartyTestsDatabaseLoggedIn(unittest.TestCase):
     """Flask tests that use the database."""
 
     def setUp(self):
@@ -37,6 +37,12 @@ class PartyTestsDatabase(unittest.TestCase):
 
         self.client = app.test_client()
         app.config['TESTING'] = True
+
+        with self.client as c:
+            with c.session_transaction() as sess:
+                sess['RSVP'] = True
+        #         print(sess)
+                # sess.modified = True
 
         # Connect to test database (uncomment when testing database)
         connect_to_db(app, "postgresql:///testdb")
@@ -53,9 +59,18 @@ class PartyTestsDatabase(unittest.TestCase):
         db.drop_all()
 
     def test_games(self):
+    #     with self.client as c:
+    #         with c.session_transaction() as sess:
+    #             sess['RSVP']
+
         result = self.client.get("/games")
 
+        # if sess.get('RSVP'):
         self.assertIn(b"Monopoly", result.data)
+        self.assertNotIn(b"<form", result.data)
+        # else:
+        #     self.assertIn(b"<form", result.data)
+        #     self.assertNotIn(b"Monopoly", result.data)
 
 
 if __name__ == "__main__":
